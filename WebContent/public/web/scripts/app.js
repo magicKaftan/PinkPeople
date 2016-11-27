@@ -28,28 +28,29 @@ var config = {
   
  var distance = require("google-distance");
  distance.apiKey='AIzaSyCnxSCssoIxwYacvpX3bIauI3GDihbb-Ns';
+ 
 app.post('/', function (req, res) {
 	  var resp = new twilio.TwimlResponse();
 	  var msgParts = req.body.Body.trim().toLowerCase().split(',');
 	  var isVictim = 0;
 	  var isHelper = 0;
-	  var addr = "";
-	  var ref = firebase.database().ref().child('Megha');
-	  var village = "Hamilton";
-	  console.log("helppp11");
+	  var addr = msgParts[1];
+	  var ref = firebase.database().ref().child('PinkPeople');
+	  var village = msgParts[2];
+	  
 	  if (msgParts[0].trim().toLowerCase() === 'help'){
 			isVictim = 1;
-			console.log("helppp");
-			var queryRef = ref.orderByChild("Village").equalTo(village).limitToLast(2);
+			 
+			var queryRef = ref.orderByChild("village").equalTo(village).limitToLast(2);
 			queryRef.on("value", function(querySnapshot) {
 			    if (querySnapshot.numChildren()>0) {
 			      // Data is ordered by increasing height, so we want the first entry
 			      querySnapshot.forEach(function(address) {
-				  console.log(address.val().Village);
+				  console.log(address.val().village);
 				  console.log(msgParts[1]);
 			    	  distance.get(
 			    			  {
-			    			    origin: address.val(),
+			    			    origin: address.val().addr,
 			    			    destination: msgParts[1]								
 			    			  },
 			    			  function(err, data) {
@@ -61,7 +62,7 @@ app.post('/', function (req, res) {
 			        return true;
 			      });
 			    } else {
-			      console.log("The stegosaurus is the shortest dino");
+			      console.log("No helpers found");
 			    }
 			  });
 			
@@ -74,8 +75,8 @@ app.post('/', function (req, res) {
 		addr=msgParts[1];
 	  }
 	 
-	  writeNewPost( req.body.From ,isVictim,isHelper,req.body.Body.trim().toLowerCase(),addr,"someVillage");
-	  resp.message('Thanks for subscribing!');
+	  writeNewPost( req.body.From ,isVictim,isHelper,req.body.Body.trim().toLowerCase(),addr,village);
+	  resp.message('Help is on its way');
 	  res.writeHead(200, {
 	    'Content-Type':'text/xml'
 	  });
